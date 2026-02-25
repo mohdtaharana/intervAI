@@ -211,7 +211,8 @@ export async function generateQuestions(
     `You are an expert ${type} interviewer. Generate 1 interview question${resumeContext ? ' personalized for: ' + resumeContext : ''}. 
     ${languageContext}
     Allowed types: technical, behavioral, hr, situational, project.
-    Reply ONLY in JSON array: [{"text": "question", "type": "type", "difficulty": "easy|medium|hard"}]`,
+    CRITICAL: YOU MUST RETURN ONLY A VALID JSON ARRAY. NO TEXT BEFORE OR AFTER. NO EXPLANATIONS.
+    Example: [{"text": "...", "type": "...", "difficulty": "..."}]`,
     `Generate opening question for a ${type} interview.`,
     0.7, 8000
   );
@@ -240,14 +241,19 @@ ${difficultyHint}
 ${languageContext}
 Allowed types: technical, behavioral, hr, situational, project.
 
-Previous conversation history (DO NOT REPEAT THESE QUESTIONS):
+STRICT RULES FOR QUESTION GENERATION:
+1. DO NOT REPEAT any question from the history below.
+2. DO NOT ASK questions that are semantically identical to previous ones (e.g., if you asked about "React life cycles", don't ask it again).
+3. If the candidate SKIPPED a question, DO NOT ask it again. Move to a completely different topic or a different sub-topic.
+4. Your goal is to cover as much breadth and depth as possible without duplication.
+
+Previous conversation history (DO NOT REPEAT THESE):
 ${prevContext}
 
-CRITICAL: Generate 1 natural follow-up question. 
-It must be DISTINCT from all previous questions listed above. 
-If the candidate mentioned a specific technology or project in their previous answer, you can ask a deep-dive about that, but DO NOT ask the same question twice.
+CRITICAL: Generate 1 unique follow-up question. 
+YOUR ENTIRE RESPONSE MUST BE A VALID JSON ARRAY. NO CONVERSATIONAL FILLER.
 Return ONLY JSON: [{"text": "question", "type": "type", "difficulty": "easy|medium|hard"}]`,
-    'Generate next question.',
+    'Generate next unique question.',
     0.7, 8000
   );
 
@@ -264,6 +270,7 @@ export async function analyzeAnswer(
     `You are an expert interview evaluator. Score the candidate's answer.
 Score 0-10 for: communication, technical, confidence, clarity, and overall score.
 Provide brief constructive feedback.
+CRITICAL: YOUR ENTIRE RESPONSE MUST BE A VALID JSON OBJECT. NO MARKDOWN OUTSIDE THE JSON. NO PREAMBLE.
 Return ONLY valid JSON: {"score": N, "communication": N, "technical": N, "confidence": N, "clarity": N, "feedback": "..."}`,
     `Question (${questionType}): ${question}\nAnswer: ${answer}`,
     0.3, 8000
@@ -287,13 +294,14 @@ export async function generateOverallFeedback(
 
 Q&A: ${qaSummary}
 
+CRITICAL: YOUR ENTIRE RESPONSE MUST BE A VALID JSON OBJECT. NO EXPLANATIONS.
 Return ONLY valid JSON: {
-  "feedback": "paragraph", 
-  "strengths": ["s1","s2"], 
-  "weaknesses": ["w1","w2"], 
-  "improvements": ["i1","i2"],
-  "skill_gaps": ["specific technical or soft skills missing"],
-  "learning_roadmap": ["specific topics or resources to study"]
+  "feedback": "...", 
+  "strengths": ["..."], 
+  "weaknesses": ["..."], 
+  "improvements": ["..."],
+  "skill_gaps": ["..."],
+  "learning_roadmap": ["..."]
 }`,
     'Provide comprehensive interview feedback based on the session.',
     0.4, 8000
