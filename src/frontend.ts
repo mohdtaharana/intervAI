@@ -1064,19 +1064,17 @@ function renderInterview() {
           </div>
 
           <!-- Bottom Actions -->
-          <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full justify-center px-4 max-w-3xl">
-            <button id="submit-answer-btn" onclick="submitAnswer()" class="w-full sm:flex-[2] order-first sm:order-none py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-200 transition-all shadow-xl shadow-white/5 active:scale-95 flex items-center justify-center gap-3 group">
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 w-full justify-center px-4 max-w-4xl">
+            <button onclick="skipQuestion()" class="order-2 sm:order-1 flex-1 sm:flex-none sm:min-w-[120px] py-4 rounded-xl border border-white/10 text-gray-400 font-bold text-sm hover:bg-white/5 transition-all active:scale-95 uppercase tracking-widest">
+              <i class="fas fa-forward mr-2 text-xs"></i>Skip
+            </button>
+            <button id="submit-answer-btn" onclick="submitAnswer()" class="order-1 sm:order-2 w-full sm:flex-[2] py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-200 transition-all shadow-xl shadow-white/5 active:scale-95 flex items-center justify-center gap-3 group">
               <span>Analyze Answer</span>
               <i class="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
             </button>
-            <div class="flex items-center gap-3 w-full sm:w-auto sm:flex-1">
-              <button onclick="skipQuestion()" class="flex-1 py-4 sm:px-6 rounded-xl border border-white/10 text-gray-400 font-bold text-sm hover:bg-white/5 transition-all active:scale-95 uppercase tracking-widest">
-                <i class="fas fa-forward mr-2 text-xs"></i>Skip
-              </button>
-              <button onclick="endInterview()" class="flex-1 py-4 sm:px-6 rounded-xl border border-red-500/20 text-red-400 font-bold text-sm hover:bg-red-500/10 transition-all active:scale-95 uppercase tracking-widest">
-                <i class="fas fa-stop mr-2 text-xs"></i>Finish
-              </button>
-            </div>
+            <button onclick="endInterview()" class="order-3 sm:order-3 flex-1 sm:flex-none sm:min-w-[120px] py-4 rounded-xl border border-red-500/20 text-red-400 font-bold text-sm hover:bg-red-500/10 transition-all active:scale-95 uppercase tracking-widest">
+              <i class="fas fa-stop mr-2 text-xs"></i>Finish
+            </button>
           </div>
         </div>
       </div>
