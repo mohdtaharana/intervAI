@@ -65,15 +65,15 @@ adminRoutes.delete('/users/:id', async (c) => {
         return c.json({ error: 'CRITICAL: Taha Rana (Super Admin) cannot be deleted' }, 403)
     }
 
-    // Manual batch delete to ensure reliability in deployed D1 environments
-    // Child records are deleted first, then the user.
+    // Explicitly enable foreign keys for this request (Required for D1 cascades)
     try {
-        await c.env.DB.batch([
-            c.env.DB.prepare('DELETE FROM interview_questions WHERE interview_id IN (SELECT id FROM interviews WHERE user_id = ?)').bind(id),
-            c.env.DB.prepare('DELETE FROM interviews WHERE user_id = ?').bind(id),
-            c.env.DB.prepare('DELETE FROM resumes WHERE user_id = ?').bind(id),
-            c.env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)
-        ])
+        await c.env.DB.prepare('PRAGMA foreign_keys = ON').run()
+
+        // Now a single delete will cascade to interviews, resumes, and questions automatically
+        const result = await c.env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run()
+
+        if (!result.success) throw new Error('Delete failed in database')
+
         return c.json({ success: true, message: 'User and all associated data deleted' })
     } catch (err: any) {
         console.error('Delete error:', err)
