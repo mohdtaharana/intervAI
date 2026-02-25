@@ -5,6 +5,7 @@ import { interviewRoutes } from './routes/interview'
 import { resumeRoutes } from './routes/resume'
 import { dashboardRoutes } from './routes/dashboard'
 import { aiRoutes } from './routes/ai'
+import { adminRoutes } from './routes/admin'
 import { renderApp } from './frontend'
 
 import type { D1Database } from '@cloudflare/workers-types'
@@ -31,6 +32,7 @@ app.route('/api/interviews', interviewRoutes)
 app.route('/api/resumes', resumeRoutes)
 app.route('/api/dashboard', dashboardRoutes)
 app.route('/api/ai', aiRoutes)
+app.route('/api/admin', adminRoutes)
 
 // Health check
 app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }))
