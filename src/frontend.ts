@@ -1073,6 +1073,9 @@ function renderInterview() {
               <span>Analyze Answer</span>
               <i class="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
             </button>
+            <button onclick="endInterview()" class="flex-1 max-w-[160px] py-4 rounded-xl border border-red-500/20 text-red-400 font-bold text-sm hover:bg-red-500/10 transition-all active:scale-95 uppercase tracking-widest">
+              <i class="fas fa-stop mr-2 text-xs"></i>Finish
+            </button>
           </div>
         </div>
       </div>
@@ -1240,12 +1243,21 @@ function skipQuestion() {
   }
 }
 
-function endInterview() {
-  if (confirm('Are you sure you want to end this interview?')) {
+async function endInterview() {
+  if (confirm('Are you sure you want to finish this interview and get your results now?')) {
     interviewActive = false;
     stopListening();
     stopSpeaking();
-    navigate('results', interviewState?.interviewId);
+    
+    showToast('Finalizing your results... please wait.', 'info');
+    
+    try {
+      await api('/interviews/' + interviewState.interviewId + '/finish', { method: 'POST' });
+      navigate('results', interviewState?.interviewId);
+    } catch (err) {
+      showToast('Error finalizing interview: ' + err.message, 'error');
+      navigate('results', interviewState?.interviewId);
+    }
   }
 }
 
