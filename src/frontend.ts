@@ -636,7 +636,7 @@ function renderNav() {
     <div class="absolute bottom-0 left-0 w-full p-6 border-t border-gray-100 bg-white">
       <div class="flex items-center gap-3 mb-3">
         <div id="sidebar-avatar" class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm overflow-hidden border border-gray-100">
-          \${localStorage.getItem('user_avatar_' + currentUser?.email) ? '<img src="' + localStorage.getItem('user_avatar_' + currentUser?.email) + '" class="w-full h-full object-cover">' : (currentUser?.name?.charAt(0) || 'U')}
+          \${currentUser?.avatar_url ? '<img src="' + currentUser.avatar_url + '" class="w-full h-full object-cover">' : (currentUser?.name?.charAt(0) || 'U')}
         </div>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium text-gray-900 truncate">\${currentUser?.name || 'User'}</p>
@@ -657,7 +657,7 @@ function renderNav() {
       </div>
       <div class="flex items-center gap-2">
         <button onclick="navigate('profile')" class="w-9 h-9 rounded-full bg-primary-50 border border-primary-100 overflow-hidden flex items-center justify-center text-primary-600 font-bold text-xs">
-          \${localStorage.getItem('user_avatar_' + currentUser?.email) ? '<img src="' + localStorage.getItem('user_avatar_' + currentUser?.email) + '" class="w-full h-full object-cover">' : (currentUser?.name?.charAt(0) || 'U')}
+          \${currentUser?.avatar_url ? '<img src="' + currentUser.avatar_url + '" class="w-full h-full object-cover">' : (currentUser?.name?.charAt(0) || 'U')}
         </button>
         <button onclick="toggleMobileMenu()" class="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100"><i class="fas fa-bars"></i></button>
       </div>
@@ -693,7 +693,7 @@ function renderDashboard() {
     <div class="p-4 sm:p-8 max-w-7xl mx-auto">
       <div class="mb-8 flex items-center gap-4">
         <div class="hidden sm:block w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-white">
-          \${localStorage.getItem('user_avatar_' + currentUser?.email) ? '<img src="' + localStorage.getItem('user_avatar_' + currentUser?.email) + '" class="w-full h-full object-cover">' : '<div class="w-full h-full gradient-bg flex items-center justify-center text-white text-2xl font-bold">' + (currentUser?.name?.charAt(0) || 'U') + '</div>'}
+          \${currentUser?.avatar_url ? '<img src="' + currentUser.avatar_url + '" class="w-full h-full object-cover">' : '<div class="w-full h-full gradient-bg flex items-center justify-center text-white text-2xl font-bold">' + (currentUser?.name?.charAt(0) || 'U') + '</div>'}
         </div>
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Welcome back, \${currentUser?.name?.split(' ')[0] || 'User'} <span class="inline-block animate-bounce-slow">👋</span></h1>
@@ -1513,7 +1513,7 @@ async function deleteResume(id) {
 
 // ========== PAGE: PROFILE ==========
 function renderProfile() {
-  const avatar = localStorage.getItem('user_avatar_' + currentUser?.email);
+  const avatar = currentUser?.avatar_url;
   return pageWrapper(\`
     <div class="p-4 sm:p-8 max-w-2xl mx-auto">
       <div class="mb-8">
@@ -1563,11 +1563,24 @@ function handleAvatarUpload(event) {
   if (file.size > 1024 * 1024) { showToast('Image too large. Please use an image under 1MB', 'warning'); return; }
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     const base64 = e.target.result;
-    localStorage.setItem('user_avatar_' + currentUser?.email, base64);
-    showToast('Profile photo updated successfully!');
-    render(); // Re-render current page
+    
+    // Optimistic UI update
+    const preview = $('profile-avatar-preview');
+    if (preview) preview.innerHTML = '<img src="' + base64 + '" class="w-full h-full object-cover">';
+    
+    try {
+      const data = await api('/auth/profile', {
+        method: 'PATCH',
+        body: { avatar_url: base64 }
+      });
+      currentUser = data.user;
+      showToast('Profile photo updated and saved to account!');
+      render(); 
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   };
   reader.readAsDataURL(file);
 }
