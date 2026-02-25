@@ -23,7 +23,7 @@ async function adminMiddleware(c: any, next: any) {
         const payload = await verifyToken(token, c.env.JWT_SECRET)
         if (payload.role !== 'admin') return c.json({ error: 'Forbidden: Admin access only' }, 403)
         c.set('user', payload)
-        await next()
+        return await next()
     } catch (err) {
         return c.json({ error: 'Invalid token' }, 401)
     }
@@ -65,12 +65,9 @@ adminRoutes.delete('/users/:id', async (c) => {
         return c.json({ error: 'CRITICAL: Taha Rana (Super Admin) cannot be deleted' }, 403)
     }
 
-    // Cascading delete across all tables
-    await c.env.DB.batch([
-        c.env.DB.prepare('DELETE FROM interviews WHERE user_id = ?').bind(id),
-        c.env.DB.prepare('DELETE FROM resumes WHERE user_id = ?').bind(id),
-        c.env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)
-    ])
+    // Single delete statement. The database schema's ON DELETE CASCADE 
+    // will automatically remove interviews, resumes, and interview_questions.
+    await c.env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run()
 
     return c.json({ success: true, message: 'User and all associated data deleted' })
 })
