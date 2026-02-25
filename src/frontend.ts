@@ -120,10 +120,15 @@ async function api(path, options = {}) {
   
   let data;
   const contentType = res.headers.get('content-type');
+  const text = await res.text();
+  
   if (contentType && contentType.includes('application/json')) {
-    data = await res.json();
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      data = { error: 'Invalid JSON response from server: ' + text.substring(0, 100) };
+    }
   } else {
-    const text = await res.text();
     data = res.ok ? { message: text } : { error: text || 'Request failed with status ' + res.status };
   }
 
