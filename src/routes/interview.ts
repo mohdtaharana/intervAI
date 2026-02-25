@@ -229,6 +229,25 @@ interviewRoutes.delete('/:id', async (c) => {
   }
 })
 
+// Finish interview early
+interviewRoutes.post('/:id/finish', async (c) => {
+  try {
+    const user = await getUser(c)
+    const id = c.req.param('id')
+
+    const interview = await c.env.DB.prepare(
+      'SELECT id, status FROM interviews WHERE id = ? AND user_id = ?'
+    ).bind(id, user.id).first<any>()
+
+    if (!interview) return c.json({ error: 'Interview not found' }, 404)
+    if (interview.status === 'completed') return c.json({ success: true, message: 'Already completed' })
+
+    return await completeInterview(c, id, user.id)
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500)
+  }
+})
+
 // Get interview details
 interviewRoutes.get('/:id', async (c) => {
   try {
@@ -291,16 +310,14 @@ async function completeInterview(c: any, interviewId: string, userId: string) {
   ).bind(interviewId).all()
 
   const answered = questions.results.filter((q: any) => q.answer_text && q.answer_text !== '[Skipped]')
-  const count = answered.length || 1
+  const totalAsked = questions.results.length || 1
 
-  // If no questions were answered, we use the full set to avoid division by zero but scores will stay low.
-  // However, we filter them to ensure "Skipped" counts don't make the user look like they technically failed
   const avgScores = {
-    total: answered.reduce((s: number, q: any) => s + (q.score || 0), 0) / count,
-    communication: answered.reduce((s: number, q: any) => s + (q.communication_score || 0), 0) / count,
-    technical: answered.reduce((s: number, q: any) => s + (q.technical_score || 0), 0) / count,
-    confidence: answered.reduce((s: number, q: any) => s + (q.confidence_score || 0), 0) / count,
-    clarity: answered.reduce((s: number, q: any) => s + (q.clarity_score || 0), 0) / count,
+    total: answered.reduce((s: number, q: any) => s + (q.score || 0), 0) / totalAsked,
+    communication: answered.reduce((s: number, q: any) => s + (q.communication_score || 0), 0) / totalAsked,
+    technical: answered.reduce((s: number, q: any) => s + (q.technical_score || 0), 0) / totalAsked,
+    confidence: answered.reduce((s: number, q: any) => s + (q.confidence_score || 0), 0) / totalAsked,
+    clarity: answered.reduce((s: number, q: any) => s + (q.clarity_score || 0), 0) / totalAsked,
   }
 
   const overallFeedback = await generateOverallFeedback(
