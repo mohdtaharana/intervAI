@@ -973,7 +973,7 @@ function renderInterview() {
   return \`
   <div class="min-h-screen bg-[#0f172a] text-white page-transition font-sans">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-white/5 gap-3 glass-dark z-50 sticky top-0">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 gap-4 glass-dark z-50 sticky top-0">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-900/20">
           <i class="fas fa-brain text-white text-lg"></i>
@@ -1028,14 +1028,14 @@ function renderInterview() {
       <!-- Content Container -->
       <div class="w-full space-y-6">
         <!-- Question Card -->
-        <div class="w-full bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
+        <div class="w-full bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden group">
           <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-600/10 rounded-full blur-3xl group-hover:bg-primary-600/20 transition-all"></div>
           <div class="flex items-start gap-5 relative z-10">
             <div class="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center flex-shrink-0 border border-primary-500/20">
               <i class="fas fa-quote-left text-primary-400"></i>
             </div>
             <div class="flex-1">
-              <p id="question-text" class="text-xl sm:text-2xl font-medium leading-relaxed text-gray-100">\${q.text}</p>
+              <p id="question-text" class="text-lg sm:text-2xl font-medium leading-relaxed text-gray-100">\${q.text}</p>
               <div class="mt-4 flex items-center gap-2">
                 <button onclick="speakQuestion()" class="px-3 py-1 rounded-full bg-primary-500/10 text-primary-400 text-[10px] font-bold uppercase tracking-wider border border-primary-500/20 hover:bg-primary-500/20 transition-all">
                   <i class="fas fa-volume-high mr-1"></i>Listen
@@ -1065,17 +1065,19 @@ function renderInterview() {
           </div>
 
           <!-- Bottom Actions -->
-          <div class="flex items-center gap-4 w-full justify-center px-4">
-            <button onclick="skipQuestion()" class="flex-1 max-w-[160px] py-4 rounded-xl border border-white/10 text-gray-400 font-bold text-sm hover:bg-white/5 transition-all active:scale-95 uppercase tracking-widest">
-              <i class="fas fa-forward mr-2 text-xs"></i>Skip
-            </button>
-            <button id="submit-answer-btn" onclick="submitAnswer()" class="flex-[2] max-w-[320px] py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-200 transition-all shadow-xl shadow-white/5 active:scale-95 flex items-center justify-center gap-3 group">
+          <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full justify-center px-4 max-w-3xl">
+            <button id="submit-answer-btn" onclick="submitAnswer()" class="w-full sm:flex-[2] order-first sm:order-none py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-200 transition-all shadow-xl shadow-white/5 active:scale-95 flex items-center justify-center gap-3 group">
               <span>Analyze Answer</span>
               <i class="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
             </button>
-            <button onclick="endInterview()" class="flex-1 max-w-[160px] py-4 rounded-xl border border-red-500/20 text-red-400 font-bold text-sm hover:bg-red-500/10 transition-all active:scale-95 uppercase tracking-widest">
-              <i class="fas fa-stop mr-2 text-xs"></i>Finish
-            </button>
+            <div class="flex items-center gap-3 w-full sm:w-auto sm:flex-1">
+              <button onclick="skipQuestion()" class="flex-1 py-4 sm:px-6 rounded-xl border border-white/10 text-gray-400 font-bold text-sm hover:bg-white/5 transition-all active:scale-95 uppercase tracking-widest">
+                <i class="fas fa-forward mr-2 text-xs"></i>Skip
+              </button>
+              <button onclick="endInterview()" class="flex-1 py-4 sm:px-6 rounded-xl border border-red-500/20 text-red-400 font-bold text-sm hover:bg-red-500/10 transition-all active:scale-95 uppercase tracking-widest">
+                <i class="fas fa-stop mr-2 text-xs"></i>Finish
+              </button>
+            </div>
           </div>
         </div>
       </div>
