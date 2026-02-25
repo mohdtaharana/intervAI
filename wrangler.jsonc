@@ -3,12 +3,7 @@
   "name": "webapp",
   "compatibility_date": "2026-02-22",
   "pages_build_output_dir": "./dist",
-  "compatibility_flags": ["nodejs_compat"],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "ai-interviewer-db",
-      "database_id": "local-dev-db"
-    }
+  "compatibility_flags": [
+    "nodejs_compat"
   ]
 }
