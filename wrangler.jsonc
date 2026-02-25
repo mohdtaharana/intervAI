@@ -5,5 +5,12 @@
   "pages_build_output_dir": "./dist",
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-interviewer-db",
+      "database_id": "a8302bc4-d25a-4aba-a4ad-022511e2b14d"
+    }
   ]
 }
