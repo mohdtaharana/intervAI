@@ -388,6 +388,7 @@ function render(data) {
     case 'resumes': app.innerHTML = renderResumes(); loadResumesPage(); break;
     case 'history': app.innerHTML = renderHistory(); loadHistory(); break;
     case 'profile': app.innerHTML = renderProfile(); break;
+    case 'admin': app.innerHTML = renderAdminPanel(); loadAdminPanelData(); break;
     default: app.innerHTML = renderLanding();
   }
 }
@@ -609,6 +610,7 @@ function renderNav() {
     { page: 'history', icon: 'fa-history', label: 'History' },
     { page: 'resumes', icon: 'fa-file-alt', label: 'Resumes' },
     { page: 'profile', icon: 'fa-user-circle', label: 'My Profile' },
+    ...(currentUser?.role === 'admin' ? [{ page: 'admin', icon: 'fa-user-shield', label: 'Admin Panel' }] : []),
   ];
   return \`
   <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-100 z-40 hidden lg:block">
@@ -1672,6 +1674,160 @@ async function loadHistory() {
     \`).join('');
   } catch (err) {
     $('history-list').innerHTML = '<p class="text-red-500 text-center">Error loading history</p>';
+  }
+}
+
+// ========== PAGE: ADMIN PANEL ==========
+function renderAdminPanel() {
+  return pageWrapper(\`
+    <div class="p-4 sm:p-8 max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900"><i class="fas fa-user-shield mr-2 text-primary-500"></i>Admin Control Center</h1>
+        <p class="text-gray-500 mt-1">Manage users, roles, and system health</p>
+      </div>
+
+      <!-- Stats Grid -->
+      <div id="admin-stats-cards" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        \${[1, 2, 3].map(() => '<div class="h-28 rounded-2xl bg-white border border-gray-100 animate-pulse"></div>').join('')}
+      </div>
+
+      <!-- User Management Table -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h3 class="font-bold text-gray-900">User Management</h3>
+          <div class="relative max-w-sm">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="user-search" oninput="filterUsers(this.value)" placeholder="Search users by name or email..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white focus:border-primary-400 transition-all">
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50/50 text-[10px] uppercase tracking-wider font-bold text-gray-500">
+                <th class="px-6 py-4">User</th>
+                <th class="px-6 py-4">Role</th>
+                <th class="px-6 py-4">Joined</th>
+                <th class="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-user-list">
+              <tr><td colspan="4" class="px-6 py-12 text-center text-gray-400 animate-pulse">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  \`);
+}
+
+let allUsers = [];
+
+async function loadAdminPanelData() {
+  try {
+    // Load Stats
+    const stats = await api('/admin/stats');
+    $('admin-stats-cards').innerHTML = [
+      { label: 'Total Users', value: stats.totalUsers, icon: 'fa-users', color: 'blue' },
+      { label: 'Total Interviews', value: stats.totalInterviews, icon: 'fa-video', color: 'purple' },
+      { label: 'Total Resumes', value: stats.totalResumes, icon: 'fa-file-alt', color: 'green' }
+    ].map(s => \`
+      <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-\${s.color}-50 text-\${s.color}-500 flex items-center justify-center text-xl">
+            <i class="fas \${s.icon}"></i>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-500">\${s.label}</p>
+            <p class="text-2xl font-bold text-gray-900">\${s.value}</p>
+          </div>
+        </div>
+      </div>
+    \`).join('');
+
+    // Load Users
+    const userData = await api('/admin/users');
+    allUsers = userData.users;
+    displayUsers(allUsers);
+  } catch (err) {
+    showToast('Failed to load admin data: ' + err.message, 'error');
+  }
+}
+
+function displayUsers(users) {
+  const tbody = $('admin-user-list');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-gray-400">No users found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => \`
+    <tr class="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
+      <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-primary-50 border border-gray-100 flex items-center justify-center text-primary-500 font-bold">
+            \${u.avatar_url ? '<img src="' + u.avatar_url + '" class="w-full h-full object-cover">' : u.name.charAt(0)}
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate">\${u.name}</p>
+            <p class="text-xs text-gray-500 truncate">\${u.email}</p>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <select onchange="updateUserRole('\${u.id}', this.value)" class="text-xs font-bold px-2 py-1 rounded-lg border-none bg-transparent focus:ring-0 \${u.role === 'admin' ? 'text-purple-600' : 'text-gray-600'}">
+          <option value="user" \${u.role === 'user' ? 'selected' : ''}>USER</option>
+          <option value="admin" \${u.role === 'admin' ? 'selected' : ''}>ADMIN</option>
+        </select>
+      </td>
+      <td class="px-6 py-4 text-sm text-gray-500 font-medium">
+        \${formatDate(u.created_at)}
+      </td>
+      <td class="px-6 py-4 text-right">
+        <div class="flex items-center justify-end gap-2">
+          <button onclick="adminDeleteUser('\${u.id}', '\${u.name}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
+            <i class="fas fa-trash-alt text-sm"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  \`).join('');
+}
+
+function filterUsers(query) {
+  const q = query.toLowerCase();
+  const filtered = allUsers.filter(u => 
+    u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  );
+  displayUsers(filtered);
+}
+
+async function updateUserRole(id, role) {
+  if (currentUser.id === id) {
+    showToast('You cannot change your own role', 'warning');
+    loadAdminPanelData();
+    return;
+  }
+  try {
+    await api('/admin/users/' + id + '/role', { method: 'PATCH', body: { role } });
+    showToast('User role updated to ' + role);
+    loadAdminPanelData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function adminDeleteUser(id, name) {
+  if (currentUser.id === id) {
+    showToast('You cannot delete your own admin account', 'warning');
+    return;
+  }
+  if (!confirm('CRITICAL: Are you sure you want to permanently delete user "' + name + '" and ALL their data? This cannot be undone.')) return;
+  
+  try {
+    await api('/admin/users/' + id, { method: 'DELETE' });
+    showToast('User "' + name + '" deleted successfully');
+    loadAdminPanelData();
+  } catch (err) {
+    showToast(err.message, 'error');
   }
 }
 
