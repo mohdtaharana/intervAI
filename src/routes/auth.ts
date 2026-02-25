@@ -136,7 +136,7 @@ authRoutes.patch('/profile', async (c) => {
           avatar_url = COALESCE(?, avatar_url),
           updated_at = CURRENT_TIMESTAMP 
         WHERE id = ?
-      `).bind(name, email, avatar_url, userId).run()
+      `).bind(name ?? null, email ?? null, avatar_url ?? null, userId).run()
 
     const user = await c.env.DB.prepare('SELECT id, email, name, role, avatar_url FROM users WHERE id = ?').bind(userId).first<any>()
 
