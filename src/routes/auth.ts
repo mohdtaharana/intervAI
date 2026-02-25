@@ -96,7 +96,7 @@ authRoutes.post('/login', async (c) => {
     }
 
     const token = await createToken(
-      { id: user.id, email: user.email, name: user.name, role: user.role, avatar_url: user.avatar_url },
+      { id: user.id, email: user.email, name: user.name, role: user.role },
       c.env.JWT_SECRET
     )
 
@@ -123,8 +123,8 @@ authRoutes.patch('/profile', async (c) => {
     const payload = await verifyToken(token, c.env.JWT_SECRET)
 
     const { name, email, avatar_url } = await c.req.json()
-    if (!name && !email) {
-      return c.json({ error: 'Name or email is required' }, 400)
+    if (!name && !email && !avatar_url) {
+      return c.json({ error: 'Name, email, or avatar_url is required' }, 400)
     }
 
     const userId = payload.id
@@ -141,7 +141,7 @@ authRoutes.patch('/profile', async (c) => {
     const user = await c.env.DB.prepare('SELECT id, email, name, role, avatar_url FROM users WHERE id = ?').bind(userId).first<any>()
 
     // Generate new token with updated name/email
-    const newToken = await createToken({ id: user.id, email: user.email, name: user.name, role: user.role, avatar_url: user.avatar_url }, c.env.JWT_SECRET)
+    const newToken = await createToken({ id: user.id, email: user.email, name: user.name, role: user.role }, c.env.JWT_SECRET)
 
     return c.json({ success: true, user, token: newToken })
   } catch (err: any) {
