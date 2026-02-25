@@ -702,8 +702,8 @@ function renderDashboard() {
       </div>
       
       <!-- Stats Cards -->
-      <div id="stats-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        \${[1,2,3,4].map(() => '<div class="h-28 rounded-2xl bg-white border border-gray-100 animate-pulse"></div>').join('')}
+      <div id="stats-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        \${[1,2,3].map(() => '<div class="h-28 rounded-2xl bg-white border border-gray-100 animate-pulse"></div>').join('')}
       </div>
       
       <!-- Quick Actions -->
@@ -763,7 +763,6 @@ async function loadDashboardData() {
     // Stats cards
     $('stats-cards').innerHTML = [
       { icon: 'fa-video', label: 'Total Interviews', value: s.totalInterviews, color: 'blue' },
-      { icon: 'fa-check-circle', label: 'Completed', value: s.completedInterviews, color: 'green' },
       { icon: 'fa-star', label: 'Avg Score', value: avg.overall ? avg.overall + '/10' : 'N/A', color: 'yellow' },
       { icon: 'fa-file-alt', label: 'Resumes', value: s.totalResumes, color: 'purple' }
     ].map(c => \`
