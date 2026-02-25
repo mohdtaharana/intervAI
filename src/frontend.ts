@@ -1108,10 +1108,13 @@ async function submitAnswer(isFastSkip = false) {
   stopSpeaking();
 
   const btn = $('submit-answer-btn');
+  const skipBtn = document.querySelector('button[onclick="skipQuestion()"]');
+  
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>' + (isFastSkip ? 'Skipping...' : 'Analyzing...');
   }
+  if (skipBtn) skipBtn.disabled = true;
 
   try {
     const data = await api('/interviews/' + interviewState.interviewId + '/answer', {
@@ -1186,6 +1189,7 @@ async function submitAnswer(isFastSkip = false) {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Answer';
     }
+    if (skipBtn) skipBtn.disabled = false;
   }
 }
 
@@ -1215,7 +1219,9 @@ function moveToNextQuestion(data) {
     if (fb) fb.classList.add('hidden');
     
     const btn = $('submit-answer-btn');
+    const skipBtn = document.querySelector('button[onclick="skipQuestion()"]');
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Answer'; }
+    if (skipBtn) skipBtn.disabled = false;
 
     // Speak the question
     speak(data.nextQuestion.text);
