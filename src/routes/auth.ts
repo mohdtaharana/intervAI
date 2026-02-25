@@ -58,14 +58,14 @@ authRoutes.post('/signup', async (c) => {
     const passwordHash = await hashPassword(password)
 
     await c.env.DB.prepare(
-      'INSERT INTO users (id, email, password_hash, name, role) VALUES (?, ?, ?, ?, ?)'
-    ).bind(id, email, passwordHash, name, 'user').run()
+      'INSERT INTO users (id, email, password_hash, name, role, avatar_url) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(id, email, passwordHash, name, 'user', null).run()
 
     const token = await createToken({ id, email, name, role: 'user' }, c.env.JWT_SECRET)
 
     return c.json({
       success: true,
-      user: { id, email, name, role: 'user' },
+      user: { id, email, name, role: 'user', avatar_url: null },
       token
     })
   } catch (err: any) {
@@ -83,7 +83,7 @@ authRoutes.post('/login', async (c) => {
     }
 
     const user = await c.env.DB.prepare(
-      'SELECT id, email, password_hash, name, role FROM users WHERE email = ?'
+      'SELECT id, email, password_hash, name, role, avatar_url FROM users WHERE email = ?'
     ).bind(email).first<any>()
 
     if (!user) {
@@ -96,13 +96,13 @@ authRoutes.post('/login', async (c) => {
     }
 
     const token = await createToken(
-      { id: user.id, email: user.email, name: user.name, role: user.role },
+      { id: user.id, email: user.email, name: user.name, role: user.role, avatar_url: user.avatar_url },
       c.env.JWT_SECRET
     )
 
     return c.json({
       success: true,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, avatar_url: user.avatar_url },
       token
     })
   } catch (err: any) {
@@ -122,27 +122,26 @@ authRoutes.patch('/profile', async (c) => {
     const token = authHeader.split(' ')[1]
     const payload = await verifyToken(token, c.env.JWT_SECRET)
 
-    const { name, email } = await c.req.json()
+    const { name, email, avatar_url } = await c.req.json()
     if (!name && !email) {
       return c.json({ error: 'Name or email is required' }, 400)
     }
 
     const userId = payload.id
 
-    if (email) {
-      const existing = await c.env.DB.prepare('SELECT id FROM users WHERE email = ? AND id != ?').bind(email, userId).first()
-      if (existing) {
-        return c.json({ error: 'Email already in use' }, 409)
-      }
-      await c.env.DB.prepare('UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email), updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(name, email, userId).run()
-    } else {
-      await c.env.DB.prepare('UPDATE users SET name = COALESCE(?, name), updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(name, userId).run()
-    }
+    await c.env.DB.prepare(`
+        UPDATE users SET 
+          name = COALESCE(?, name), 
+          email = COALESCE(?, email), 
+          avatar_url = COALESCE(?, avatar_url),
+          updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ?
+      `).bind(name, email, avatar_url, userId).run()
 
-    const user = await c.env.DB.prepare('SELECT id, email, name, role FROM users WHERE id = ?').bind(userId).first<any>()
+    const user = await c.env.DB.prepare('SELECT id, email, name, role, avatar_url FROM users WHERE id = ?').bind(userId).first<any>()
 
     // Generate new token with updated name/email
-    const newToken = await createToken({ id: user.id, email: user.email, name: user.name, role: user.role }, c.env.JWT_SECRET)
+    const newToken = await createToken({ id: user.id, email: user.email, name: user.name, role: user.role, avatar_url: user.avatar_url }, c.env.JWT_SECRET)
 
     return c.json({ success: true, user, token: newToken })
   } catch (err: any) {
@@ -161,7 +160,7 @@ authRoutes.get('/me', async (c) => {
     const payload = await verifyToken(token, c.env.JWT_SECRET)
 
     const user = await c.env.DB.prepare(
-      'SELECT id, email, name, role, created_at FROM users WHERE id = ?'
+      'SELECT id, email, name, role, avatar_url, created_at FROM users WHERE id = ?'
     ).bind(payload.id).first()
 
     if (!user) {
