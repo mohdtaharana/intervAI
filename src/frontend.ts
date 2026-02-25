@@ -117,7 +117,16 @@ async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (currentToken) headers['Authorization'] = 'Bearer ' + currentToken;
   const res = await fetch(API + path, { ...options, headers, body: options.body ? JSON.stringify(options.body) : undefined });
-  const data = await res.json();
+  
+  let data;
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    data = await res.json();
+  } else {
+    const text = await res.text();
+    data = res.ok ? { message: text } : { error: text || 'Request failed with status ' + res.status };
+  }
+
   if (!res.ok && res.status === 401) { logout(); throw new Error('Session expired'); }
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
