@@ -804,7 +804,7 @@ async function loadDashboardData() {
     // Stats cards
     $('stats-cards').innerHTML = [
       { icon: 'fa-video', label: 'Total Interviews', value: s.totalInterviews, color: 'blue' },
-      { icon: 'fa-star', label: 'Avg Score', value: avg.overall ? avg.overall + '/10' : 'N/A', color: 'yellow' },
+      { icon: 'fa-star', label: 'Avg Score', value: avg.overall ? avg.overall + '/10' : '0/10', color: 'yellow' },
       { icon: 'fa-file-alt', label: 'Resumes', value: s.totalResumes, color: 'purple' }
     ].map(c => \`
       <div class="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm animate-fade-in card-hover">
