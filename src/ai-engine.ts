@@ -289,22 +289,44 @@ export async function generateOverallFeedback(
     `Q${i + 1}: ${q.question_text}\nA: ${q.answer_text || '(skipped)'}\nScore: ${q.score}/10`
   ).join('\n\n');
 
-  const llmResult = await tryLLMCall(apiKey, baseUrl,
-    `You are an expert interview evaluator. Scores: Overall ${scores.total}/10, Communication ${scores.communication}/10, Technical ${scores.technical}/10, Confidence ${scores.confidence}/10, Clarity ${scores.clarity}/10.
+  const answeredCount = questions.filter((q: any) => q.answer_text && q.answer_text !== '[Skipped]').length;
+  const totalCount = questions.length;
 
-Q&A: ${qaSummary}
+  const llmResult = await tryLLMCall(apiKey, baseUrl,
+    `You are a strict, honest interview evaluator. Do NOT sugarcoat or be falsely positive.
+
+SCORES (out of 10):
+- Overall: ${scores.total}/10
+- Communication: ${scores.communication}/10
+- Technical: ${scores.technical}/10
+- Confidence: ${scores.confidence}/10
+- Clarity: ${scores.clarity}/10
+
+SESSION STATS:
+- Questions answered: ${answeredCount} out of ${totalCount}
+- Skipped/unanswered: ${totalCount - answeredCount}
+
+Q&A DETAILS:
+${qaSummary}
+
+STRICT RULES:
+1. Your feedback MUST reflect the actual scores above. If scores are low (0-4), the feedback must be critical and honest.
+2. If most questions were skipped or unanswered, clearly state the candidate did not attempt the interview properly.
+3. Do NOT list strengths that are not supported by the actual answers given.
+4. Weaknesses and skill_gaps must be specific to what the candidate actually failed to demonstrate.
+5. If the candidate gave very little or no answers, strengths list should be empty or minimal.
 
 CRITICAL: YOUR ENTIRE RESPONSE MUST BE A VALID JSON OBJECT. NO EXPLANATIONS.
 Return ONLY valid JSON: {
-  "feedback": "...", 
-  "strengths": ["..."], 
-  "weaknesses": ["..."], 
-  "improvements": ["..."],
-  "skill_gaps": ["..."],
-  "learning_roadmap": ["..."]
+  "feedback": "honest overall summary",
+  "strengths": ["only real strengths shown in answers"],
+  "weaknesses": ["specific weaknesses based on actual performance"],
+  "improvements": ["actionable improvements"],
+  "skill_gaps": ["specific gaps identified"],
+  "learning_roadmap": ["concrete next steps"]
 }`,
-    'Provide comprehensive interview feedback based on the session.',
-    0.4, 8000
+    'Provide honest interview feedback strictly based on actual performance.',
+    0.3, 8000
   );
 
   const parsed = parseJSON(llmResult);
