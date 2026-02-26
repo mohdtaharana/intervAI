@@ -65,11 +65,25 @@ adminRoutes.delete('/users/:id', async (c) => {
         return c.json({ error: 'CRITICAL: Taha Rana (Super Admin) cannot be deleted' }, 403)
     }
 
-    // Explicitly enable foreign keys for this request (Required for D1 cascades)
     try {
-        await c.env.DB.prepare('PRAGMA foreign_keys = ON').run()
+        // Cloudflare D1 does not support PRAGMA foreign_keys at runtime.
+        // Manually delete in correct order to avoid FOREIGN KEY constraint errors.
 
-        // Now a single delete will cascade to interviews, resumes, and questions automatically
+        // 1. Delete interview questions linked to this user's interviews
+        await c.env.DB.prepare(`
+            DELETE FROM interview_questions
+            WHERE interview_id IN (
+                SELECT id FROM interviews WHERE user_id = ?
+            )
+        `).bind(id).run()
+
+        // 2. Delete interviews
+        await c.env.DB.prepare('DELETE FROM interviews WHERE user_id = ?').bind(id).run()
+
+        // 3. Delete resumes
+        await c.env.DB.prepare('DELETE FROM resumes WHERE user_id = ?').bind(id).run()
+
+        // 4. Finally delete the user
         const result = await c.env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run()
 
         if (!result.success) throw new Error('Delete failed in database')
