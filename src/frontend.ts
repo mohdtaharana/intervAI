@@ -263,10 +263,15 @@ function startListening(onResult, onEnd) {
   let finalTranscript = '';
   let interimTranscript = '';
   recognition.onresult = (e) => {
+    // Rebuild interim from scratch each event to avoid duplicates on mobile
     interimTranscript = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' ';
-      else interimTranscript = e.results[i][0].transcript;
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        finalTranscript += t + ' ';
+      } else {
+        interimTranscript += t;
+      }
     }
     onResult?.(finalTranscript + interimTranscript, false);
   };
@@ -350,7 +355,7 @@ async function handleLogin(e) {
     currentToken = data.token;
     currentUser = data.user;
     localStorage.setItem('ai_interview_token', data.token);
-    showToast('Welcome back, ' + data.user.name + '!');
+    showToast('Welcome, ' + data.user.name + '!');
     navigate('dashboard');
   } catch (err) {
     showToast(err.message, 'error');
@@ -712,8 +717,7 @@ function renderDashboard() {
           \${currentUser?.avatar_url ? '<img src="' + currentUser.avatar_url + '" class="w-full h-full object-cover">' : '<div class="w-full h-full gradient-bg flex items-center justify-center text-white text-2xl font-bold">' + (currentUser?.name?.charAt(0) || 'U') + '</div>'}
         </div>
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Welcome back, \${currentUser?.name?.split(' ')[0] || 'User'} <span class="inline-block animate-bounce-slow">👋</span></h1>
-          <p class="text-gray-500 mt-1 uppercase tracking-wider text-[10px] font-bold">IntervAI Gold Member</p>
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Welcome, \${currentUser?.name?.split(' ')[0] || 'User'} <span class="inline-block animate-bounce-slow">👋</span></h1>
         </div>
       </div>
       
