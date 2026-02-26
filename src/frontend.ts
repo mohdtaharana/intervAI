@@ -193,11 +193,17 @@ let recognition = null;
 let isListening = false;
 let isSpeaking = false;
 
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) return null;
+  // Always create a fresh instance to avoid stale result state
   recognition = new SpeechRecognition();
-  recognition.continuous = true;
+  // continuous=true causes duplicate results on mobile — disable it
+  recognition.continuous = !isMobile();
   recognition.interimResults = true;
   const lang = interviewState?.language || 'en';
   recognition.lang = lang === 'ur' ? 'ur-PK' : 'en-US';
@@ -258,25 +264,40 @@ function stopSpeaking() {
 }
 
 function startListening(onResult, onEnd) {
-  if (!recognition) initSpeechRecognition();
+  // Always recreate on mobile to clear stale result history
+  if (isMobile() || !recognition) initSpeechRecognition();
   if (!recognition) { showToast('Speech recognition not supported in this browser', 'warning'); return; }
+
   let finalTranscript = '';
   let interimTranscript = '';
+  let highestProcessedIndex = -1;
+
   recognition.onresult = (e) => {
-    // Rebuild interim from scratch each event to avoid duplicates on mobile
     interimTranscript = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript;
+      // Skip any result index we've already finalized to prevent duplicates
       if (e.results[i].isFinal) {
-        finalTranscript += t + ' ';
+        if (i > highestProcessedIndex) {
+          finalTranscript += e.results[i][0].transcript + ' ';
+          highestProcessedIndex = i;
+        }
       } else {
-        interimTranscript += t;
+        interimTranscript += e.results[i][0].transcript;
       }
     }
     onResult?.(finalTranscript + interimTranscript, false);
   };
-  recognition.onend = () => { isListening = false; updateMicUI(); onEnd?.(finalTranscript.trim()); };
-  recognition.onerror = (e) => { if (e.error !== 'no-speech') console.error('Speech error:', e.error); };
+
+  recognition.onend = () => {
+    isListening = false;
+    updateMicUI();
+    onEnd?.(finalTranscript.trim());
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'no-speech') console.error('Speech error:', e.error);
+  };
+
   finalTranscript = '';
   isListening = true;
   updateMicUI();
